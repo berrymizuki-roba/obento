@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>お弁当注文状況</title>
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      background-color: #FFFFFF;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .saturday {
+      background-color: #F0F0F0;
+      color: blue;
+      cursor: default;
+    }
+    .sunday {
+      background-color: #F0F0F0;
+      color: red;
+      cursor: default;
+    }
+    .locked {
+      background-color: #f9f9f9;
+      color: gray;
+      cursor: not-allowed;
+    }
+   .rimit{
+	color:red;
+    }
+   .pageTitle{
+	padding-top:30px;
+        text-align: center;
+    }
+   body{
+        background: #FFFFEE;
+	padding: 0px 50px;
+    }
+
+  </style>
+</head>
+<body>
+  <h1 class="pageTitle">お弁当注文状況（2週間分）</h1>
+  <h4>※当日の朝<span class="rimit">8:10</span>以降は変更できません</h4>
+  <table id="orderTable">
+    <thead>
+      <tr>
+        <th>名前</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const members = [
+          "柴本社長", "斉藤", "亀山", "阿部", "野口",
+          "粟屋", "上田", "福島", "松橋", "荒木",
+          "ゲスト１", "ゲスト２", "ゲスト３" 
+    ];
+
+    const weekdays = ["日", "月", "火", "水", "木", "金", "土"];
+    const today = new Date();
+    const lockTime = new Date();
+    lockTime.setHours(8, 10, 0, 0);
+
+    const table = document.getElementById("orderTable");
+    const theadRow = table.querySelector("thead tr");
+
+    const dates = [];
+
+    // ヘッダー（日付＋曜日）
+    for (let i = 0; i < 14; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      dates.push(date);
+
+      const day = date.getDay();
+      const label = `${date.getMonth() + 1}/${date.getDate()}(${weekdays[day]})`;
+
+      const th = document.createElement("th");
+      th.textContent = label;
+      if (day === 0) th.className = "sunday";
+      else if (day === 6) th.className = "saturday";
+      theadRow.appendChild(th);
+    }
+
+    // 本体（名前＋注文状況）
+    const tbody = table.querySelector("tbody");
+
+    members.forEach(name => {
+      const tr = document.createElement("tr");
+      const nameCell = document.createElement("td");
+      nameCell.textContent = name;
+      tr.appendChild(nameCell);
+
+      dates.forEach(date => {
+        const td = document.createElement("td");
+        const day = date.getDay();
+        const isToday = date.toDateString() === today.toDateString();
+        const isLocked = isToday && today >= lockTime;
+
+        let className = "";
+        if (day === 0) className = "sunday";
+        else if (day === 6) className = "saturday";
+        else if (isLocked) className = "locked";
+        else className = "toggle-cell";
+
+        td.className = className;
+
+        const key = `${name}_${date.toDateString()}`;
+        let saved = localStorage.getItem(key);
+
+        if (saved !== null) {
+          td.textContent = saved;
+        } else {
+          const isGuest = name.includes("ゲスト");
+          const isDefaultNo = name === "柴本社長" || name === "荒木" || isGuest;
+          td.textContent = (day === 0 || day === 6) ? "" : (isDefaultNo ? "無し" : "〇");
+        }
+
+        if (className === "toggle-cell") {
+          td.addEventListener("click", () => {
+            td.textContent = td.textContent === "〇" ? "無し" : "〇";
+            localStorage.setItem(key, td.textContent);
+          });
+        }
+
+        tr.appendChild(td);
+      });
+
+      tbody.appendChild(tr);
+    });
+  </script>
+</body>
+</html>
